@@ -1,0 +1,72 @@
+<!doctype html>
+
+<html>
+<head>
+<title>Auto-adjust</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<style>
+body {
+	text-align: center;
+}
+
+#g1 {
+	width: 400px;
+	height: 320px;
+	display: inline-block;
+	margin: 1em;
+}
+
+p {
+	display: block;
+	width: 450px;
+	margin: 2em auto;
+	text-align: left;
+}
+</style>
+
+<script src="resources/js/raphael.2.1.0.min.js"></script>
+<script src="resources/js/justgage.1.0.1.min.js"></script>
+<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+
+<script>
+	var g1;
+
+	window.onload = function() {
+		var socket = io.connect('http://localhost:37011');
+		var g1;
+
+		function initializeGauge(gauge){
+			g1 = new JustGage({
+				id : "g1",
+				value : gauge.invocations,
+				min : 0,
+				max : gauge.threshold,
+				title : gauge.response,
+				label : gauge.keyphrase + 's',
+				refreshAnimationType : 'bounce'
+			});
+		}
+		
+		socket.on('initialize', initializeGauge);
+		
+		socket.on('report', function(gauge) {
+			console.log(gauge);
+			console.log(g1.title)
+			console.log(gauge.response)
+			if(0 == gauge.invocations) {
+				location.reload()
+			}
+			g1.refresh(gauge.invocations);
+		});
+
+		setInterval(function() {
+			socket.emit("refresh")
+		}, 2500);
+	};
+</script>
+
+</head>
+<body>
+	<div id="g1"></div>
+</body>
+</html>
